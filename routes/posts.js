@@ -1,6 +1,9 @@
 const express = require('express')
 const router = express.Router()
 const Post = require('../models/Post')
+const { check, validationResult } = require('express-validator')
+
+
 
 router.get('/', async (req, res) => {
   try {
@@ -15,18 +18,31 @@ router.get('/specific', (req, res) => {
   res.send('We are on a specific Post')
 })
 
-router.post('/', async (req, res) => {
-  const post = new Post({
-    title: req.body.title,
-    description: req.body.description,
-  })
-  try {
-    const savedPost = await post.save()
-    res.json(savedPost)
-  } catch (err) {
-    res.json({ message: err })
-  }
-})
+router.post(
+  '/',
+  [check('title', 'Please enter the title').isEmpty()],
+  
+  async (req, res) => {
+    const { errors } = validationResult(req);
+    if (errors.length) {
+        return res.status(400).json({ errors: errors })
+      }
+    const post = new Post({
+      title: req.body.title,
+      description: req.body.description,
+    })
+    post.validate('createPost')
+
+    try {
+      const savedPost = await post.save()
+      res.json(savedPost)
+    } catch (err) {
+      res.status(400).json({status: false,  message: err })
+    }
+
+    
+  },
+)
 
 // get by id
 
